@@ -57,6 +57,7 @@ dkms.conf
 *.vcxproj
 *.filters
 *.user
+*.sln
 
 # Folders
 .vs
