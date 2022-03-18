@@ -1,6 +1,4 @@
 //{{NO_DEPENDENCIES}}
-// File di inclusione generato da Microsoft Visual C++.
-// Usato da handmade.rc
 
 #define IDS_APP_TITLE			103
 
@@ -16,8 +14,7 @@
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif
-// Valori predefiniti successivi per i nuovi oggetti
-//
+
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 
