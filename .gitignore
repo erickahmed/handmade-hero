@@ -51,10 +51,18 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+#Visual Studio
+*.ico
+*.rc
+*.vcxproj
+*.filters
+*.user
+
 # Folders
 .vs
 .vscode
 build
+vs
 
 # TEMPORARY
 x64
