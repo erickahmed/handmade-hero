@@ -46,6 +46,23 @@ LRESULT CALLBACK WndCallback(
         Result = 0;
         break;
 
+    case WM_PAINT:
+    {
+        PAINTSTRUCT Paint;
+
+        HDC DeviceContext = BeginPaint(Window, &Paint);
+
+        int X = Paint.rcPaint.left;
+        int Y = Paint.rcPaint.top;
+        int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
+        int Width = Paint.rcPaint.right - Paint.rcPaint.left;
+
+        PatBlt(DeviceContext, X, Y, Height, Width, WHITENESS);
+        EndPaint(Window, &Paint);
+
+        Result = 0;
+    }   break;
+
     default:
         OutputDebugStringA("default\n");
         Result = DefWindowProc(Window, Message, WParam, LParam);
@@ -105,7 +122,6 @@ int WINAPI WinMain(
     else {
         // TODO: logging and error manager
     }
-            
 
     return 0;
 }
