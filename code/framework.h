@@ -13,11 +13,12 @@
 #pragma once
 
 #include <windows.h>
+#include <wingdi.h>
 #include <debugapi.h>
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
+//#include <malloc.h>
+//#include <memory.h>
+//#include <tchar.h>
 //#include <crtdbg.h> check why it wont compile
