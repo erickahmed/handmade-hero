@@ -6,13 +6,52 @@
     File: handmade.cpp
     Author: Erick Ahmed
     Creation: 08/03/2022
-    Last revision: 21/03/2022
+    Last revision: 25/03/2022
 =================================================================================== */
 
 #include "framework.h"
 
 //#define _CRTDBG_MAP_ALLOC
 
+static bool Running;
+static BITMAPINFO BitmapInfo;
+static void* BitmapMemory;
+static HBITMAP BitmapHandle;
+static HDC BitmapDeviceContext;
+
+static void Win32ResizeDIBSection(int Width, int Height)
+{
+    if (BitmapHandle) DeleteObject(BitmapHandle);
+    if (!BitmapDeviceContext) BitmapDeviceContext = CreateCompatibleDC(0);
+
+    BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
+    BitmapInfo.bmiHeader.biWidth = Width;
+    BitmapInfo.bmiHeader.biHeight = Height;
+    BitmapInfo.bmiHeader.biPlanes = 1;
+    BitmapInfo.bmiHeader.biBitCount = 32;
+    BitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+    BitmapHandle = CreateDIBSection(
+        BitmapDeviceContext,
+        &BitmapInfo,
+        DIB_RGB_COLORS,
+        &BitmapMemory,
+        NULL, NULL
+    );
+}
+
+static void WindowUpdate(HDC DeviceContext, int X, int Y, int Width, int Height)
+{
+    StretchDIBits(
+        DeviceContext,
+        X, Y, Width, Height,
+        X, Y, Width, Height,
+        BitmapMemory,
+        &BitmapInfo,
+        DIB_RGB_COLORS,
+        SRCCOPY
+    );
+}
 
 WNDPROC Wndproc;
 
@@ -20,30 +59,33 @@ LRESULT CALLBACK WndCallback(
     HWND Window,
     UINT Message,
     WPARAM WParam,
-    LPARAM LParam
+    LPARAM LParam 
 ) {
-    LRESULT Result;
+    LRESULT Result = 0;
 
-    switch (Message)
+    RECT ClientRect;
+    GetClientRect(Window, &ClientRect);
+    int ClientHeight = ClientRect.bottom - ClientRect.top;
+    int ClientWidth = ClientRect.right - ClientRect.left;
+
+    switch (Message) 
     {
     case WM_SIZE:
-        OutputDebugStringA("WM_SIZE\n");
-        Result = 0;
+        Win32ResizeDIBSection(ClientWidth, ClientHeight);
         break;
     
     case WM_DESTROY:
-        OutputDebugStringA("WM_DESTROY\n");
-        Result = 0;
+        Running = false;
+        DestroyWindow(Window);
         break;
 
     case WM_CLOSE:
-        OutputDebugStringA("WM_CLOSE\n");
-        Result = 0;
+        Running = false;
+        PostQuitMessage(0);
         break;
     
     case WM_ACTIVATEAPP:
-        OutputDebugStringA("WM_ACTIVATEAPP\n");
-        Result = 0;
+        //
         break;
 
     case WM_PAINT:
@@ -55,20 +97,20 @@ LRESULT CALLBACK WndCallback(
         int X = Paint.rcPaint.left;
         int Y = Paint.rcPaint.top;
         int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
-        int Width = Paint.rcPaint.right - Paint.rcPaint.left;
+        int Width  = Paint.rcPaint.right  - Paint.rcPaint.left;
 
-        PatBlt(DeviceContext, X, Y, Height, Width, WHITENESS);
+        WindowUpdate(DeviceContext, X, Y, Width, Height);
+
         EndPaint(Window, &Paint);
 
         Result = 0;
-    }   break;
-
-    default:
-        OutputDebugStringA("default\n");
-        Result = DefWindowProc(Window, Message, WParam, LParam);
         break;
     }
 
+    default:
+        Result = DefWindowProc(Window, Message, WParam, LParam);
+        break;
+    }
     return(Result);
 }
 
@@ -85,14 +127,15 @@ int WINAPI WinMain(
     WindowClass.lpfnWndProc = WndCallback;
     WindowClass.hInstance = Instance;
     WindowClass.hIcon = NULL;                               // TODO: add icon
-    WindowClass.lpszMenuName = "Handmade Hero";             // FIXME: in debug output is random char
+    WindowClass.lpszMenuName = "Handmade Hero";             // FIXME: it outputs some random chinese charachters... wtf is going on?!
     WindowClass.lpszClassName = "HandmadeHeroWindowClass";
     
-    if (RegisterClassExA(&WindowClass)) {
+    if (RegisterClassExA(&WindowClass))
+    {
         HWND WindowHandle = CreateWindowExA(
             0,
             WindowClass.lpszClassName,
-            WindowClass.lpszMenuName,           // SEE: line 71
+            WindowClass.lpszMenuName,           // SEE: line 85
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -104,10 +147,13 @@ int WINAPI WinMain(
             0
         );
 
-        if (WindowHandle != NULL) {
+        if (WindowHandle != NULL)
+        {
+            Running = true;
             MSG Message;
 
-            for (;;) {
+            while(Running)
+            {
                 BOOL MessageResult = GetMessage(&Message, NULL, 0, 0);
                 if (MessageResult > 0) {
                     TranslateMessage(&Message);
@@ -115,11 +161,13 @@ int WINAPI WinMain(
                 } else break;
             }
         }
-        else {
+        else
+        {
             // TODO: logging and error manager
         }
     }
-    else {
+    else
+    {
         // TODO: logging and error manager
     }
 
