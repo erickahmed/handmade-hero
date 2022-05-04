@@ -6,7 +6,7 @@
     File: handmade.cpp
     Author: Erick Ahmed
     Creation: 08/03/2022
-    Last revision: 25/03/2022
+    Last revision: 04/05/2022
 =================================================================================== */
 
 #include "framework.h"
@@ -73,7 +73,7 @@ LRESULT CALLBACK WndCallback(
     case WM_SIZE:
         Win32ResizeDIBSection(ClientWidth, ClientHeight);
         break;
-    
+
     case WM_DESTROY:
         Running = false;
         DestroyWindow(Window);
@@ -83,7 +83,7 @@ LRESULT CALLBACK WndCallback(
         Running = false;
         PostQuitMessage(0);
         break;
-    
+
     case WM_ACTIVATEAPP:
         //
         break;
@@ -108,7 +108,7 @@ LRESULT CALLBACK WndCallback(
     }
 
     default:
-        Result = DefWindowProc(Window, Message, WParam, LParam);
+        Result = DefWindowProcA(Window, Message, WParam, LParam);
         break;
     }
     return(Result);
@@ -121,21 +121,21 @@ int WINAPI WinMain(
     int         ShowCode
 ) {
     WNDCLASSEXA WindowClass = {};
-    
+
     WindowClass.cbSize = sizeof(WNDCLASSEX);
     WindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = WndCallback;
     WindowClass.hInstance = Instance;
     WindowClass.hIcon = NULL;                               // TODO: add icon
-    WindowClass.lpszMenuName = "Handmade Hero";             // FIXME: it outputs some random chinese charachters... wtf is going on?!
+    WindowClass.lpszMenuName = "Handmade Hero";
     WindowClass.lpszClassName = "HandmadeHeroWindowClass";
-    
+
     if (RegisterClassExA(&WindowClass))
     {
         HWND WindowHandle = CreateWindowExA(
             0,
             WindowClass.lpszClassName,
-            WindowClass.lpszMenuName,           // SEE: line 85
+            WindowClass.lpszMenuName,
             WS_OVERLAPPEDWINDOW|WS_VISIBLE,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -154,11 +154,13 @@ int WINAPI WinMain(
 
             while(Running)
             {
-                BOOL MessageResult = GetMessage(&Message, NULL, 0, 0);
-                if (MessageResult > 0) {
+                BOOL MessageResult = GetMessageA(&Message, NULL, 0, 0);
+                if (MessageResult > 0) 
+                {
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
-                } else break;
+                }
+                else break;
             }
         }
         else
@@ -170,6 +172,5 @@ int WINAPI WinMain(
     {
         // TODO: logging and error manager
     }
-
     return 0;
 }

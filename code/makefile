@@ -5,14 +5,14 @@ BLD_FL := -c
 SRC := handmade.cpp
 OBJ := handmade.o
 LIBS := -lgdi32 -luser32
-#DEPS := .h .c
+DEPS :=  framework.c
 
 OUT := handmade.exe
 
 .PHONY: all clean
 
 object: $(SRC)
-	$(C) $(SRC) $(STND) $(LIBS) $(OBJ_FL) $(OUT)
+	$(C) $(SRC) $(STND) $(DEPS) $(LIBS) $(OBJ_FL) $(OUT)
 
 executable: $(OBJ)
 	$(C) $(OBJ) $(BLD_FL) $(OUT)
