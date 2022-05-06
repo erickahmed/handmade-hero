@@ -5,7 +5,7 @@ BLD_FL := -c
 SRC := handmade.cpp
 OBJ := handmade.o
 LIBS := -lgdi32 -luser32
-DEPS :=  framework.c
+DEPS :=  framework.h
 
 OUT := handmade.exe
 

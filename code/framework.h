@@ -13,11 +13,15 @@
 
 #include <windows.h>
 #include <wingdi.h>
-#include <debugapi.h>
+//#include <debugapi.h>
+//#include <memoryapi.h>
 
 #include <stdint.h>
 #include <stdlib.h>
+
 //#include <malloc.h>
 //#include <memory.h>
 //#include <tchar.h>
+
 //#include <crtdbg.h> check why it wont compile
+//#define _CRTDBG_MAP_ALLOC

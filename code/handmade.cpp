@@ -7,45 +7,69 @@
     Author: Erick Ahmed
     Creation: 08/03/2022
     Last revision: 04/05/2022
+    Reference: Handmade Hero Day 004
 =================================================================================== */
 
 #include "framework.h"
 
-//#define _CRTDBG_MAP_ALLOC
-
 static bool Running;
 static BITMAPINFO BitmapInfo;
 static void* BitmapMemory;
-static HBITMAP BitmapHandle;
-static HDC BitmapDeviceContext;
+static int BitmapWidth, BitmapHeight;
+static int BytesPerPixel = 4;
+
+static void RenderToWindow(int XOffset, int YOffset)
+{
+    int Width  = BitmapWidth;
+    int Height = BitmapHeight;
+
+    int Pitch = Width * BytesPerPixel;
+    uint8_t *Row = (uint8_t *)BitmapMemory;
+    
+    for (int Y = 0; Y < BitmapHeight; ++Y)
+    {
+        uint32_t *Pixel = (uint32_t *)Row;
+        for (int X = 0; X < BitmapWidth; ++X)
+        {
+            /* 0xBBGGRRXX */
+
+            uint8_t Red = 128;
+            uint8_t Blue = X + XOffset;
+            uint8_t Green = Y + YOffset;
+
+            *Pixel++ = Red << 16 | Green << 8 | Blue;
+        }
+        Row += Pitch;
+    }
+}
 
 static void Win32ResizeDIBSection(int Width, int Height)
 {
-    if (BitmapHandle) DeleteObject(BitmapHandle);
-    if (!BitmapDeviceContext) BitmapDeviceContext = CreateCompatibleDC(0);
+    if (BitmapMemory) VirtualFree(BitmapMemory, 0, MEM_RELEASE);
+
+    BitmapWidth  = Width;
+    BitmapHeight = Height;
 
     BitmapInfo.bmiHeader.biSize = sizeof(BitmapInfo.bmiHeader);
-    BitmapInfo.bmiHeader.biWidth = Width;
-    BitmapInfo.bmiHeader.biHeight = Height;
+    BitmapInfo.bmiHeader.biWidth = BitmapWidth;
+    BitmapInfo.bmiHeader.biHeight = -BitmapHeight;
     BitmapInfo.bmiHeader.biPlanes = 1;
     BitmapInfo.bmiHeader.biBitCount = 32;
     BitmapInfo.bmiHeader.biCompression = BI_RGB;
 
-    BitmapHandle = CreateDIBSection(
-        BitmapDeviceContext,
-        &BitmapInfo,
-        DIB_RGB_COLORS,
-        &BitmapMemory,
-        NULL, NULL
-    );
+    int BitmapMemorySize = Width * Height * BytesPerPixel;
+    BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
 }
 
-static void WindowUpdate(HDC DeviceContext, int X, int Y, int Width, int Height)
+static void WindowUpdate(HDC DeviceContext, RECT *ClientRect, int Width, int Height)
 {
+    int WindowWidth  = ClientRect->right  - ClientRect->left;
+    int WindowHeight = ClientRect->bottom - ClientRect->top;
+
     StretchDIBits(
         DeviceContext,
-        X, Y, Width, Height,
-        X, Y, Width, Height,
+        0, 0, BitmapWidth, BitmapHeight,
+        0, 0, WindowWidth, WindowHeight,
         BitmapMemory,
         &BitmapInfo,
         DIB_RGB_COLORS,
@@ -94,12 +118,15 @@ LRESULT CALLBACK WndCallback(
 
         HDC DeviceContext = BeginPaint(Window, &Paint);
 
-        int X = Paint.rcPaint.left;
-        int Y = Paint.rcPaint.top;
+        //int X = Paint.rcPaint.left;
+        //int Y = Paint.rcPaint.top;
         int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
         int Width  = Paint.rcPaint.right  - Paint.rcPaint.left;
 
-        WindowUpdate(DeviceContext, X, Y, Width, Height);
+        RECT ClientRect;
+        GetClientRect(Window, &ClientRect);
+
+        WindowUpdate(DeviceContext, &ClientRect, Width, Height);
 
         EndPaint(Window, &Paint);
 
@@ -150,17 +177,33 @@ int WINAPI WinMain(
         if (WindowHandle != NULL)
         {
             Running = true;
-            MSG Message;
+            int XOffset = 0;
+            int YOffset = 0;
 
             while(Running)
             {
-                BOOL MessageResult = GetMessageA(&Message, NULL, 0, 0);
-                if (MessageResult > 0) 
+                MSG Message;
+
+                while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE))
                 {
+                    if (Message.message == WM_QUIT) Running = false;
+
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
+
+                    RenderToWindow(XOffset, YOffset);
+
+                    HDC DeviceContext = GetDC(WindowHandle);
+                    RECT ClientRect;
+                    GetClientRect(WindowHandle, &ClientRect);
+                    int WindowWidth = ClientRect.right - ClientRect.left;
+                    int WindowHeight = ClientRect.bottom - ClientRect.top;
+                    WindowUpdate(DeviceContext, &ClientRect, WindowWidth, WindowHeight);
+                    ReleaseDC(WindowHandle, DeviceContext);
+                    
+                    XOffset++;
+                    YOffset++;
                 }
-                else break;
             }
         }
         else
